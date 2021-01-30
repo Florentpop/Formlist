@@ -7,16 +7,35 @@ import {
   StyleSheet,
   ScrollView,
 } from "react-native";
+import { connect } from "react-redux";
+import {
+  createEmailAccount,
+  registerError,
+} from "../redux/actions/authActions";
+
 class RegisterScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
       email: "",
       password: "",
+      confirm: "",
     };
   }
+  handleUpdateState = (name, value) => {
+    this.setState({
+      [name]: value,
+    });
+  };
+  handleOnSubmit = () => {
+    if (this.state.password !== this.state.confirm) {
+      this.props.registerError("Password do not match");
+      return;
+    }
+    this.props.createEmailAccount(this.state.email, this.state.password);
+  };
   render() {
-    const { navigation } = this.props;
+    const { navigation, auth } = this.props;
     return (
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.loginTextContainer}>
@@ -24,14 +43,17 @@ class RegisterScreen extends Component {
         </View>
 
         <View>
+          {auth.error.register && (
+            <Text style={{ color: "red" }}>{auth.error.register}</Text>
+          )}
           <TextInput
             style={styles.input}
             placeholderTextColor="#aaaaaa"
-            placeholder="Email"
             value={this.state.email}
-            onChangeText={(email) => {
-              this.setState({ email });
+            onChangeText={(text) => {
+              this.handleUpdateState("email", text);
             }}
+            placeholder="Email"
           />
 
           <TextInput
@@ -42,8 +64,8 @@ class RegisterScreen extends Component {
             autoCorrect={false}
             autoCapitalize="none"
             value={this.state.password}
-            onChangeText={(password) => {
-              this.setState({ password });
+            onChangeText={(text) => {
+              this.handleUpdateState("password", text);
             }}
           />
 
@@ -54,9 +76,9 @@ class RegisterScreen extends Component {
             placeholder="Password Again"
             autoCorrect={false}
             autoCapitalize="none"
-            value={this.state.password}
-            onChangeText={(password) => {
-              this.setState({ password });
+            value={this.state.confirm}
+            onChangeText={(text) => {
+              this.handleUpdateState("confirm", text);
             }}
           />
 
@@ -64,7 +86,10 @@ class RegisterScreen extends Component {
         </View>
 
         <View>
-          <TouchableOpacity style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.buttonContainer}
+            onPress={this.handleOnSubmit}
+          >
             <Text style={styles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
@@ -134,4 +159,10 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen;
+const mapStateToProp = (state) => {
+  return { auth: state };
+};
+
+export default connect(mapStateToProp, { createEmailAccount, registerError })(
+  RegisterScreen
+);
